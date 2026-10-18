@@ -39,6 +39,7 @@ pub mod document_preset_cmds;
 pub mod edit_cmds;
 pub mod edit_menu_cmds;
 pub mod eraser_cmds;
+pub mod curves_preset_cmds;
 pub mod export_preset_cmds;
 pub mod exr_cmds;
 pub mod extra_cmds;

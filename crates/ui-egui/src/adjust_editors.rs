@@ -61,12 +61,12 @@ pub struct Edit {
 }
 
 impl Edit {
-    fn add(&mut self, o: Edit) {
+    pub(crate) fn add(&mut self, o: Edit) {
         self.changed |= o.changed;
         self.commit |= o.commit;
         self.import_gradients |= o.import_gradients;
     }
-    fn discrete(changed: bool) -> Self {
+    pub(crate) fn discrete(changed: bool) -> Self {
         Edit { changed, commit: changed, ..Default::default() }
     }
     fn of(r: &egui::Response) -> Self {
@@ -189,7 +189,7 @@ fn color_button(ui: &mut egui::Ui, c: &mut [f32; 3]) -> Edit {
     Edit::discrete(r.changed())
 }
 
-fn label(ui: &mut egui::Ui, text: &str) {
+pub(crate) fn label(ui: &mut egui::Ui, text: &str) {
     let t = Tokens::get(ui.ctx());
     ui.label(RichText::new(tl!(&text)).color(t.text_dim).size(12.0));
 }
@@ -292,14 +292,14 @@ pub fn tone_channels(space: ToneSpace, gray: bool) -> &'static [ToneChannel] {
     }
 }
 
-fn channel_picker(ui: &mut egui::Ui, id: egui::Id, chans: &[ToneChannel], text: &str) -> usize {
+pub(crate) fn channel_picker(ui: &mut egui::Ui, id: egui::Id, chans: &[ToneChannel], text: &str) -> usize {
     let opts: Vec<(usize, &str)> = chans.iter().enumerate().map(|(i, c)| (i, c.label)).collect();
     channel_picker_opts(ui, id, &opts, text, true)
 }
 
 /// The popup, with `translate` for whether the built-in labels follow the interface language;
 /// a user-typed channel name is shown exactly as entered (#5335).
-fn channel_picker_opts(ui: &mut egui::Ui, id: egui::Id, opts: &[(usize, &str)], text: &str, translate: bool) -> usize {
+pub(crate) fn channel_picker_opts(ui: &mut egui::Ui, id: egui::Id, opts: &[(usize, &str)], text: &str, translate: bool) -> usize {
     let mut ch: usize = ui.data(|d| d.get_temp(id)).unwrap_or(0);
     if ch >= opts.len() {
         ch = 0;
@@ -318,14 +318,14 @@ fn channel_picker_opts(ui: &mut egui::Ui, id: egui::Id, opts: &[(usize, &str)], 
     ch
 }
 
-fn hist_color(ch: &ToneChannel, t: &Tokens) -> Color32 {
+pub(crate) fn hist_color(ch: &ToneChannel, t: &Tokens) -> Color32 {
     match ch.key {
         "" | "lightness" | "black" => Color32::from_gray(if t.pro { 150 } else { 110 }),
         k => tone::channel_color(k, t),
     }
 }
 
-fn bar_color(ch: &ToneChannel, t: &Tokens) -> Color32 {
+pub(crate) fn bar_color(ch: &ToneChannel, t: &Tokens) -> Color32 {
     match ch.key {
         "" | "lightness" | "black" => Color32::WHITE,
         k => tone::channel_color(k, t),
@@ -333,7 +333,7 @@ fn bar_color(ch: &ToneChannel, t: &Tokens) -> Color32 {
 }
 
 /// Horizontal (or vertical) black → `to` gradient bar.
-fn gradient_bar(p: &egui::Painter, r: Rect, from: Color32, to: Color32, vertical: bool) {
+pub(crate) fn gradient_bar(p: &egui::Painter, r: Rect, from: Color32, to: Color32, vertical: bool) {
     let mut mesh = egui::Mesh::default();
     let (a, b, c, d) = if vertical {
         (r.left_bottom(), r.right_bottom(), r.right_top(), r.left_top())
@@ -362,7 +362,7 @@ fn curve_graph(full: Rect, side: f32) -> Rect {
     Rect::from_min_max(base.min + vec2(CURVE_GRAPH_PADDING, CURVE_GRAPH_PADDING), base.max - vec2(CURVE_GRAPH_PADDING, CURVE_GRAPH_PADDING))
 }
 
-fn read_curve(v: &Value, key: &str) -> Vec<[f32; 2]> {
+pub(crate) fn read_curve(v: &Value, key: &str) -> Vec<[f32; 2]> {
     let pts: Vec<[f32; 2]> = v
         .get(key)
         .and_then(Value::as_array)
@@ -378,12 +378,12 @@ fn read_curve(v: &Value, key: &str) -> Vec<[f32; 2]> {
     if pts.len() < 2 { vec![[0.0, 0.0], [255.0, 255.0]] } else { pts }
 }
 
-fn curve_key(ch: &ToneChannel) -> &'static str {
+pub(crate) fn curve_key(ch: &ToneChannel) -> &'static str {
     if ch.key.is_empty() { "points" } else { ch.key }
 }
 
 /// A pencil-drawn channel: its 256 output levels (identity when absent or not a map).
-fn read_map(v: &Value, key: &str) -> Vec<f32> {
+pub(crate) fn read_map(v: &Value, key: &str) -> Vec<f32> {
     let map: Option<Vec<f32>> = v
         .get(key)
         .and_then(Value::as_array)
@@ -392,13 +392,13 @@ fn read_map(v: &Value, key: &str) -> Vec<f32> {
     map.unwrap_or_else(|| (0..photocraft_doc::adjust::CURVE_MAP_LEN).map(|k| k as f32).collect())
 }
 
-fn write_map(v: &mut Value, key: &str, map: &[f32]) {
+pub(crate) fn write_map(v: &mut Value, key: &str, map: &[f32]) {
     v[key] = json!(map.iter().map(|o| (o * 100.0).round() / 100.0).collect::<Vec<_>>());
 }
 
 /// Switches the Curves values between point editing and the pencil: the engine draws the point
 /// curves into maps, or fits points to the drawn maps (Photoshop's two curve buttons).
-fn set_pencil(v: &mut Value, pencil: bool, gray: bool) -> bool {
+pub(crate) fn set_pencil(v: &mut Value, pencil: bool, gray: bool) -> bool {
     let mut p = v.clone();
     p["pencil"] = json!(pencil);
     let mode = if gray { photocraft_doc::ColorMode::Grayscale } else { photocraft_doc::ColorMode::Rgb };

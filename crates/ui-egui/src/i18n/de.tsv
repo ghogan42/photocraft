@@ -3230,3 +3230,9 @@ curves	Smooth	Glätten
 	GPU Memory (MB, 0 = Automatic)	GPU-Speicher (MB, 0 = Automatisch)
 	{name} was changed by another app after it was opened or saved here.	{name} wurde von einer anderen App geändert, nachdem es hier geöffnet oder gespeichert wurde.
 	Replace it with this document, or cancel and use File › Save As to keep both.	Ersetze die Datei durch dieses Dokument oder brich ab und nutze Datei › Speichern unter, um beide zu behalten.
+
+# Curves dialog presets
+	Load Preset…	Vorgabe laden…
+	Delete Current Preset	Aktuelle Vorgabe löschen
+	Preset Options	Vorgabeoptionen
+	Enhance Per Channel Contrast	Kontrast pro Kanal verbessern

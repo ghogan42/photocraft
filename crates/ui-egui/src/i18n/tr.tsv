@@ -3956,3 +3956,9 @@ cameraData	Lens	Lens
 	GPU Memory (MB, 0 = Automatic)	GPU Belleği (MB, 0 = Otomatik)
 	{name} was changed by another app after it was opened or saved here.	{name}, burada açıldıktan veya kaydedildikten sonra başka bir uygulama tarafından değiştirildi.
 	Replace it with this document, or cancel and use File › Save As to keep both.	Bu belgeyle değiştirin ya da iptal edip ikisini de korumak için Dosya › Farklı Kaydet'i kullanın.
+
+# Curves dialog presets
+	Load Preset…	Ön Ayar Yükle…
+	Delete Current Preset	Geçerli Ön Ayarı Sil
+	Preset Options	Ön Ayar Seçenekleri
+	Enhance Per Channel Contrast	Kanal Başına Kontrastı Artır

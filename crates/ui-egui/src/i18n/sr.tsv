@@ -4299,3 +4299,9 @@ shape	Appearance	Izgled
 	GPU Memory (MB, 0 = Automatic)	GPU memorija (MB, 0 = Automatski)
 	{name} was changed by another app after it was opened or saved here.	Datoteku {name} je izmenila druga aplikacija nakon što je ovde otvorena ili sačuvana.
 	Replace it with this document, or cancel and use File › Save As to keep both.	Zameni je ovim dokumentom ili otkaži i koristi Datoteka › Sačuvaj kao da zadržiš obe.
+
+# Curves dialog presets
+	Load Preset…	Učitaj šablon…
+	Delete Current Preset	Obriši trenutni šablon
+	Preset Options	Opcije šablona
+	Enhance Per Channel Contrast	Poboljšaj kontrast po kanalu

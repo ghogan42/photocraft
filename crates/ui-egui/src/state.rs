@@ -27,6 +27,38 @@ pub struct CurvesEditorState {
     pub gesture: PointCurveState,
 }
 
+/// The Curves dialog's display options (Show Amount of, Grid size, Show), remembered between
+/// sessions as Photoshop does. View state only: never Curves parameters or document history.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct CurvesDisplayState {
+    /// Show Amount of Pigment/Ink % (true) or Light 0–255 (false), per colour model ("rgb",
+    /// "gray", "cmyk", "lab"); a model without an entry uses its default (ink for Gray and CMYK).
+    pub pigment: std::collections::BTreeMap<String, bool>,
+    /// Grid size: 10 × 10 (true) or quarter-tone 4 × 4 (false).
+    pub fine_grid: bool,
+    /// Show: the edited channel curves over the composite.
+    pub channel_overlays: bool,
+    pub histogram: bool,
+    /// Show: the diagonal of the unchanged curve.
+    pub baseline: bool,
+    /// Show: horizontal and vertical lines through a point while it is dragged.
+    pub intersection_line: bool,
+}
+
+impl Default for CurvesDisplayState {
+    fn default() -> Self {
+        Self { pigment: Default::default(), fine_grid: false, channel_overlays: true, histogram: true, baseline: true, intersection_line: true }
+    }
+}
+
+impl CurvesDisplayState {
+    /// Whether `model` shows pigment/ink percentages.
+    pub fn pigment_for(&self, model: &str) -> bool {
+        self.pigment.get(model).copied().unwrap_or(matches!(model, "gray" | "cmyk"))
+    }
+}
+
 /// Camera Raw scope preferences are view state, never filter parameters or document history.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -1302,6 +1334,8 @@ pub struct UiState {
     #[serde(default)]
     pub camera_raw_scope: CameraRawScopeState,
     #[serde(default)]
+    pub curves_display: CurvesDisplayState,
+    #[serde(default)]
     pub camera_raw_preview: CameraRawPreviewState,
 }
 
@@ -1393,6 +1427,7 @@ impl Default for UiState {
             slow_refresh_noticed: Vec::new(),
             chrome: Default::default(),
             camera_raw_scope: Default::default(),
+            curves_display: Default::default(),
             camera_raw_preview: Default::default(),
         }
     }

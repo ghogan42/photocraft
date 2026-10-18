@@ -3221,3 +3221,9 @@ curves	Smooth	Haluskan
 	Replace	Ganti
 	{name} was changed by another app after it was opened or saved here.	{name} diubah oleh aplikasi lain setelah dibuka atau disimpan di sini.
 	Replace it with this document, or cancel and use File › Save As to keep both.	Ganti dengan dokumen ini, atau batalkan dan gunakan Berkas › Simpan Sebagai untuk menyimpan keduanya.
+
+# Curves dialog presets
+	Load Preset…	Muat Preset…
+	Delete Current Preset	Hapus Preset Saat Ini
+	Preset Options	Opsi Preset
+	Enhance Per Channel Contrast	Tingkatkan Kontras per Kanal

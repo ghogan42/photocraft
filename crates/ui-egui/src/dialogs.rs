@@ -213,10 +213,12 @@ pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
             // A dialog of a few short fields (`__compact`, Fit Image) is narrower (#4673): the title
             // rule and the button row fill the width they are given, so it needs its own maximum too.
             let compact = d.fields.contains_key("__compact");
-            // The curve editor caps its graph allocation at 300 points (#5113).
-            let curves = fields.get("__adjust").and_then(Value::as_str) == Some("curves");
-            if !compact {
-                ui.set_min_width(if curves { 300.0 } else { 380.0 });
+            // Curves is Photoshop's fixed three-column layout (`curves_dialog`).
+            let curves = crate::adjust_dialog::owns_buttons(&fields);
+            if curves {
+                ui.set_min_width(crate::curves_dialog::WIDTH);
+            } else if !compact {
+                ui.set_min_width(380.0);
             }
             let wide = crate::prefs_ui::width(&d.fields, (ctx.content_rect().width() - 48.0).max(380.0));
             if let Some(w) = wide {
@@ -239,7 +241,7 @@ pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
             } else if compact {
                 260.0
             } else if curves {
-                300.0
+                crate::curves_dialog::WIDTH
             } else {
                 440.0
             }));
@@ -344,7 +346,7 @@ pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
                 DialogKind::Command if fields.contains_key("__export") => crate::export_dialog::body(app, ui, &mut fields),
                 // Image Size and Canvas Size open on Width, selected (#2329).
                 DialogKind::Command if fields.contains_key("__sizing") => first_field_focused(ui, id, |ui| crate::sizing::body(ui, &mut fields)),
-                DialogKind::Command if crate::adjust_dialog::owns(&fields) => crate::adjust_dialog::body(app, ui, &mut fields),
+                DialogKind::Command if crate::adjust_dialog::owns(&fields) => outcome = crate::adjust_dialog::body(app, ui, &mut fields, d.id, interactive),
                 DialogKind::Command if crate::blur_pins::owns(&fields) => crate::blur_pins::body(ui, &mut fields),
                 DialogKind::Command if fields.contains_key("__filter") => {
                     // Color Settings: the monitor profile in use can change while it is open.
@@ -377,7 +379,7 @@ pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
                 }
             }
             crate::field_tab::end(ui.ctx(), tab);
-            if crate::guide_layout_ui::owns(&fields) || crate::brush_preset_dialog::owns(&fields) {
+            if crate::guide_layout_ui::owns(&fields) || crate::brush_preset_dialog::owns(&fields) || crate::adjust_dialog::owns_buttons(&fields) {
                 // These dialogs own their right-side actions and validate Enter themselves.
             } else if crate::color_picker_ui::owns(&fields) {
                 if interactive && outcome.is_none() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {

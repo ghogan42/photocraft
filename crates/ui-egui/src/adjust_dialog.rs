@@ -88,13 +88,17 @@ pub(crate) fn picker_button(ui: &mut egui::Ui, selected: bool, enabled: bool, to
     response
 }
 
-fn picker_controls(ui: &mut egui::Ui, fields: &mut Map<String, Value>, mode: photocraft_doc::ColorMode) {
+/// The Set Black / Neutral Gray / White Point buttons; `labelled` puts "Eyedroppers:" before them
+/// (Levels; Curves shows them bare under its graph, as Photoshop does).
+pub(crate) fn picker_controls(ui: &mut egui::Ui, fields: &mut Map<String, Value>, mode: photocraft_doc::ColorMode, labelled: bool) {
     use photocraft_engine::adjust_params::CurvesEyedropper;
     let current = picker(fields.get(CURVE_PICKER));
     let mut chosen = None;
     ui.horizontal(|ui| {
         let tokens = crate::theme::Tokens::get(ui.ctx());
-        ui.label(egui::RichText::new(tl!("Eyedroppers:")).color(tokens.text_dim).size(12.0));
+        if labelled {
+            ui.label(egui::RichText::new(tl!("Eyedroppers:")).color(tokens.text_dim).size(12.0));
+        }
         // The swatch is the tone the picker maps the sample to (image data, like the Curves
         // gradient bars), not chrome, so it is the same in every theme; its ring is a token.
         for (id, eyedropper, label, tone) in [
@@ -178,6 +182,10 @@ pub fn open(app: &mut PhotocraftApp, command: &str) -> Option<u64> {
     fields.insert("__adjust".into(), json!(kind));
     fields.insert("__filter".into(), json!(true));
     fields.insert("__preview".into(), json!(true));
+    if kind == "curves" {
+        fields.insert(crate::curves_dialog::PRESET.into(), json!(photocraft_engine::curves_preset_cmds::DEFAULT));
+        fields.insert(crate::curves_dialog::PRESET_USER.into(), json!(false));
+    }
     if let Value::Object(p) = photocraft_engine::adjust_params::to_params(&defaults) {
         fields.extend(p);
     }
@@ -186,7 +194,7 @@ pub fn open(app: &mut PhotocraftApp, command: &str) -> Option<u64> {
 
 /// The Curves dialog's single-channel target: the Channels panel's, plus the Layers panel's mask
 /// selection — both ways of selecting a mask must give the same dropdown (#5335).
-fn isolated(app: &PhotocraftApp) -> Option<photocraft_engine::channel_cmds::IsolatedCurveChannel> {
+pub(crate) fn isolated(app: &PhotocraftApp) -> Option<photocraft_engine::channel_cmds::IsolatedCurveChannel> {
     let mask = app.layer_mask_targeted();
     app.session.active().and_then(|st| photocraft_engine::channel_cmds::isolated_curve_channel_for(st, mask))
 }
@@ -194,17 +202,34 @@ fn isolated(app: &PhotocraftApp) -> Option<photocraft_engine::channel_cmds::Isol
 /// The colour mode the Levels/Curves dialog seeds and parses in: a mask, saved channel or
 /// Quick Mask holds gray levels whatever the document's mode, so its curve is a neutral one
 /// and the fields carry no Lab or CMYK records (#5335).
-fn curve_mode(app: &PhotocraftApp, kind: &str) -> photocraft_doc::ColorMode {
+pub(crate) fn curve_mode(app: &PhotocraftApp, kind: &str) -> photocraft_doc::ColorMode {
     let mode = app.session.active().map_or(photocraft_doc::ColorMode::Rgb, |s| s.doc.mode);
     if kind == "curves" && isolated(app).is_some_and(|c| c.gray.is_some()) { photocraft_doc::ColorMode::Grayscale } else { mode }
 }
 
-/// Dialog body: the kind's editor over the fields, then the Preview checkbox.
-pub fn body(app: &mut PhotocraftApp, ui: &mut egui::Ui, fields: &mut Map<String, Value>) {
+/// Whether the dialog draws its own OK / Cancel (Curves: Photoshop's button column).
+pub fn owns_buttons(fields: &Map<String, Value>) -> bool {
+    fields.get("__adjust").and_then(Value::as_str) == Some("curves")
+}
+
+/// After the parameters change under an armed eyedropper, later samples resolve from them.
+pub(crate) fn rebase_picker(fields: &mut Map<String, Value>) {
+    if picker(fields.get(CURVE_PICKER)).is_some() {
+        let base = crate::filter_dialog::params_of(fields);
+        fields.insert(CURVE_PICKER_BASE.into(), base);
+    }
+}
+
+/// Dialog body: the kind's editor over the fields, then the Preview checkbox. Curves has its own
+/// layout and buttons ([`crate::curves_dialog`]) and returns OK / Cancel.
+pub fn body(app: &mut PhotocraftApp, ui: &mut egui::Ui, fields: &mut Map<String, Value>, id: u64, interactive: bool) -> Option<bool> {
     let kind = fields.get("__adjust").and_then(Value::as_str).unwrap_or_default().to_string();
+    if kind == "curves" {
+        return crate::curves_dialog::body(app, ui, fields, id, interactive);
+    }
     let mode = curve_mode(app, &kind);
-    if matches!(kind.as_str(), "levels" | "curves") {
-        picker_controls(ui, fields, mode);
+    if kind == "levels" {
+        picker_controls(ui, fields, mode, true);
         ui.add_space(4.0);
     }
     let mut values = crate::filter_dialog::params_of(fields);
@@ -245,16 +270,14 @@ pub fn body(app: &mut PhotocraftApp, ui: &mut egui::Ui, fields: &mut Map<String,
         // Replace the parameter keys (an editor may remove one), keep the private ones.
         fields.retain(|k, _| k.starts_with("__"));
         fields.extend(v);
-        if picker(fields.get(CURVE_PICKER)).is_some() {
-            let base = crate::filter_dialog::params_of(fields);
-            fields.insert(CURVE_PICKER_BASE.into(), base);
-        }
+        rebase_picker(fields);
     }
     let mut preview = fields.get("__preview").and_then(Value::as_bool).unwrap_or(true);
     ui.add_space(6.0);
     if crate::widgets::checkbox(ui, &mut preview, tl!("Preview")).changed() {
         fields.insert("__preview".into(), json!(preview));
     }
+    None
 }
 
 #[cfg(test)]
@@ -478,7 +501,8 @@ mod tests {
         }
     }
 
-    /// #5113: the dialog should fit its curve graph instead of reserving a blank right column.
+    /// #5113, then Photoshop's layout: the graph and every control fit inside the window, the
+    /// display options and the button column sit to the graph's right.
     #[test]
     fn curves_dialog_fits_its_graph_and_controls() {
         for language in ["en", "ru"] {
@@ -491,12 +515,15 @@ mod tests {
                     h.run_steps(4);
                     let window = h.ctx.memory(|m| m.area_rect(egui::Id::new(("dialog", id)))).unwrap();
                     let graph = h.ctx.data(|d| d.get_temp::<egui::Rect>(dialog_mem("curves").with("curves-graph"))).unwrap();
-                    assert!(window.right() - graph.right() < 40.0, "blank right column: window {window:?}, graph {graph:?}");
-                    assert!(graph.width() > 270.0, "keep the graph usable: {graph:?}");
+                    assert!(graph.width() >= 256.0, "keep the graph usable: {graph:?}");
                     assert!(window.contains_rect(graph));
-                    for label in ["Channel:", "Input:", "Output:", "Preview", "OK", "Cancel"] {
+                    for label in ["Preset:", "Channel:", "Input:", "Output:", "Show Amount of:", "Grid size:", "Show:", "Histogram", "Preview", "OK", "Cancel", "Auto"] {
                         assert!(window.contains_rect(h.get_by_label(crate::i18n::t(label)).rect()), "{label} inside the window");
                     }
+                    let ok = h.get_by_label(crate::i18n::t("OK")).rect();
+                    let show = h.get_by_label(crate::i18n::t("Show:")).rect();
+                    assert!(show.left() > graph.right() && ok.left() > show.right(), "graph | options | buttons: {graph:?} {show:?} {ok:?}");
+                    assert!(window.right() - ok.right() < 40.0, "no blank right column: window {window:?}, OK {ok:?}");
                 }
             }
         }
@@ -868,8 +895,9 @@ mod tests {
         h
     }
 
-    /// The Channel popup's selected value (its option labels are what it shows).
+    /// The Channel popup's selected value (its option labels are what it shows). The Preset
+    /// popup above it comes first and is skipped.
     fn popup_channels(h: &mut Harness<'static, PhotocraftApp>) -> Vec<String> {
-        h.query_all_by_role(egui::accesskit::Role::ComboBox).filter_map(|n| n.value().map(|s| s.to_string())).collect()
+        h.query_all_by_role(egui::accesskit::Role::ComboBox).skip(1).filter_map(|n| n.value().map(|s| s.to_string())).collect()
     }
 }

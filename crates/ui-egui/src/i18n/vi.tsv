@@ -3713,3 +3713,9 @@ curves	Smooth	Làm mượt
 	Replace	Thay thế
 	{name} was changed by another app after it was opened or saved here.	{name} đã bị một ứng dụng khác thay đổi sau khi được mở hoặc lưu ở đây.
 	Replace it with this document, or cancel and use File › Save As to keep both.	Thay thế bằng tài liệu này, hoặc hủy và dùng Tệp › Lưu thành để giữ cả hai.
+
+# Curves dialog presets
+	Load Preset…	Tải thiết lập sẵn…
+	Delete Current Preset	Xóa thiết lập sẵn hiện tại
+	Preset Options	Tùy chọn thiết lập sẵn
+	Enhance Per Channel Contrast	Tăng tương phản từng kênh

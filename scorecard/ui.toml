@@ -108,7 +108,7 @@ id = "UI-217-15"
 target = "Curves: smoothing / pencil mode, black/grey/white eyedroppers, tooltips"
 status = "done"
 issue = 217
-note = "Curves editor (adjust_editors.rs, dialog and Properties): Edit points / Draw (pencil) buttons and Smooth, all with tooltips; pencil curves are 256-level maps (Adjustment::Curves pencil, params pencil/smooth, PSD curv map form and smart-filter Mpng; #3088). Set Black/Neutral Gray/White Point eyedroppers in the Image > Adjustments > Curves dialog (adjust_dialog.rs, #873) and in a Curves adjustment layer's Properties panel (layer_picker.rs: a click on the image is one layer.setAdjustment with the eyedropper param, sampling below the layer; Esc or another tool disarms; #3110)"
+note = "Curves editor (adjust_editors.rs, dialog and Properties): Edit points / Draw (pencil) buttons and Smooth, all with tooltips; pencil curves are 256-level maps (Adjustment::Curves pencil, params pencil/smooth, PSD curv map form and smart-filter Mpng; #3088). Set Black/Neutral Gray/White Point eyedroppers in the Image > Adjustments > Curves dialog (adjust_dialog.rs, #873) and in a Curves adjustment layer's Properties panel (layer_picker.rs: a click on the image is one layer.setAdjustment with the eyedropper param, sampling below the layer; Esc or another tool disarms; #3110). The Image > Adjustments > Curves dialog has Photoshop's three-column layout (curves_dialog.rs): Preset menu with built-in and user presets and a gear for Save/Load (.acv, psd acv.rs; curves.presets.*) and Delete Current Preset, black/white input sliders, Show Amount of Light/Pigment, 4x4/10x10 grid, Show Channel Overlays/Histogram/Baseline/Intersection Line, Auto (per-channel contrast)"
 
 [[item]]
 id = "UI-217-16"

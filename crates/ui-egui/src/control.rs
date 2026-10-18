@@ -131,7 +131,7 @@ pub enum Outcome {
 /// field's value is validated before the first one is applied, so a typo, an unknown field, a
 /// bad value or a bad nested key can't reply with success while nothing — or only half of it —
 /// changed (#412).
-pub const UI_SET_FIELDS: [&str; 38] = [
+pub const UI_SET_FIELDS: [&str; 39] = [
     "tool",
     "strokeTrace",
     "panels",
@@ -170,6 +170,7 @@ pub const UI_SET_FIELDS: [&str; 38] = [
     "camTransformOnDrop",
     "tileGrid",
     "layerFilter",
+    "curvesDisplay",
 ];
 
 /// Most clicks one `ui.click` may queue (#982). Each click is a press and a release that the app
@@ -563,6 +564,8 @@ fn dispatch(app: &mut PhotocraftApp, ctx: &egui::Context, req: &ControlRequest) 
                 if crop_shield.as_ref().is_some_and(|s| !(0.0..=100.0).contains(&s.opacity)) {
                     return Err("cropShield.opacity must be 0..100".into());
                 }
+                // The Curves dialog's Show Amount of, Grid size and Show options.
+                let curves_display = merged_object(&app.ui.curves_display, p.get("curvesDisplay"), "curvesDisplay")?;
                 let panels = merged_object(&app.ui.panels, p.get("panels"), "panels")?;
                 let mask_target = bool_field(p, "maskTarget")?;
                 let vector_mask_target = bool_field(p, "vectorMaskTarget")?;
@@ -715,6 +718,9 @@ fn dispatch(app: &mut PhotocraftApp, ctx: &egui::Context, req: &ControlRequest) 
                 }
                 if let Some(o) = crop_overlay_orientation {
                     app.ui.tool_options.crop_overlay_orientation = o;
+                }
+                if let Some(d) = curves_display {
+                    app.ui.curves_display = d;
                 }
                 if let Some(s) = crop_shield {
                     app.ui.tool_options.crop_shield = s;
