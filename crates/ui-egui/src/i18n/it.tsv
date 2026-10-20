@@ -4367,3 +4367,7 @@ shape	Appearance	Aspetto
 	Use	Usa
 	In Front	Davanti
 	Behind	Dietro
+
+# DDS Options (#1327)
+	DDS Options	Opzioni DDS
+	Generate Mipmaps	Genera mipmap
